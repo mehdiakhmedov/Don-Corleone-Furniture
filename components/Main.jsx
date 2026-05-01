@@ -23,7 +23,7 @@ export default function Main() {
         </div>
       </section>
 
-      {/* ikinci bolmem */}
+      
 
       <section className="py-20 text-center">
         <div>
