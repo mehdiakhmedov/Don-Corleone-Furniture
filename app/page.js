@@ -13,7 +13,7 @@ export default function Home() {
       <ProductTabs />     
       <Features />  
       <PopularSlider /> 
-      <ContactForm/>     
+      <ContactForm/>    
     </>
   );
 }
