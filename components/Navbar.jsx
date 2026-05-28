@@ -1,31 +1,54 @@
 'use client'
 
-import { useState, useEffect } from "react"; 
+import { useState, useEffect, useRef } from "react"; 
 import Link from "next/link";
-import { FaRegHeart, FaTimes, FaTrash } from "react-icons/fa"; 
+import { FaRegHeart, FaTimes, FaTrash, FaSearch } from "react-icons/fa";
+import axios from "axios";
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [wishlistCount, setWishlistCount] = useState(0);
-  
   const [isWishlistOpen, setIsWishlistOpen] = useState(false);
   const [wishlistItems, setWishlistItems] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [showSearch, setShowSearch] = useState(false);
+  const searchRef = useRef(null);
 
   const updateWishlistCount = () => {
     const wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
     setWishlistCount(wishlist.length);
-    setWishlistItems(wishlist); 
+    setWishlistItems(wishlist);
   };
 
   useEffect(() => {
     updateWishlistCount();
     window.addEventListener("wishlistUpdate", updateWishlistCount);
+    axios.get("http://localhost/don-corleone-api/get_furnitures.php")
+      .then(res => setAllProducts(res.data))
+      .catch(err => console.error(err));
+    const handleClickOutside = (e) => {
+      if (searchRef.current && !searchRef.current.contains(e.target)) setShowSearch(false);
+    };
+    document.addEventListener("mousedown", handleClickOutside);
     return () => {
       window.removeEventListener("wishlistUpdate", updateWishlistCount);
+      document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
 
- 
+  useEffect(() => {
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      setSearchResults(allProducts.filter(p => p.name.toLowerCase().includes(q)));
+      setShowSearch(true);
+    } else {
+      setSearchResults([]);
+      setShowSearch(false);
+    }
+  }, [searchQuery, allProducts]);
+
   const removeFromWishlist = (id) => {
     let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
     wishlist = wishlist.filter(item => item.id !== id);
@@ -41,7 +64,7 @@ export default function Navbar() {
       <div className="container mx-auto flex justify-between items-center px-6">
         
         <div className="flex-none">
-            <img src="/donlogo.png" alt="Don Corleone" className="w-[80px] cursor-pointer" />
+          <Link href="/"><img src="/donlogo.png" alt="Don Corleone" className="w-[80px] cursor-pointer" /></Link>
         </div>
 
         <ul className="hidden lg:flex gap-8 font-bold text-gray-700">
@@ -54,25 +77,33 @@ export default function Navbar() {
 
         <div className="flex items-center gap-4 lg:gap-8">
           
-          <div className="hidden sm:flex relative items-center border-b border-gray-300 pb-1 w-32 xl:w-64">
+          <div className="hidden sm:flex relative items-center border-b border-gray-300 pb-1 w-32 xl:w-64" ref={searchRef}>
+            <FaSearch className="text-gray-400 mr-2 text-sm" />
             <input
               type="text"
               placeholder="Search products"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="bg-transparent outline-none text-sm w-full placeholder:text-gray-400"
             />
-            <button className="ml-2 text-gray-500 hover:text-black">
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                <path strokeLinecap="round" strokeLinejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z" />
-              </svg>
-            </button>
+            {showSearch && searchResults.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-white shadow-xl rounded-xl border border-gray-100 max-h-80 overflow-y-auto z-[80]">
+                {searchResults.slice(0, 8).map(p => (
+                  <Link key={p.id} href={`/product/${p.id}`} onClick={() => { setShowSearch(false); setSearchQuery(""); }} className="flex items-center gap-3 p-3 hover:bg-gray-50 transition border-b border-gray-50 last:border-0">
+                    <img src={`/${p.image}`} alt={p.name} className="w-10 h-10 object-contain bg-gray-50 rounded" />
+                    <div>
+                      <p className="text-sm font-medium text-gray-800">{p.name}</p>
+                      <p className="text-xs text-orange-600 font-bold">{p.price} AZN</p>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-3 lg:gap-5">
-            
-     
             <div className="relative cursor-pointer" onClick={() => setIsWishlistOpen(true)}>
                <FaRegHeart className="hover:text-orange-600 cursor-pointer text-xl"/>
-               
                {wishlistCount > 0 && (
                  <span className="absolute -top-2 -right-2 bg-orange-600 text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center font-bold">
                    {displayCount}
@@ -92,13 +123,10 @@ export default function Navbar() {
         </div>
       </div>
 
-     
       {isWishlistOpen && (
         <>
-      
           <div className="fixed inset-0 bg-black/40 z-[60]" onClick={() => setIsWishlistOpen(false)} />
           
-         
           <div className="fixed right-0 top-0 h-full w-80 bg-white shadow-xl z-[70] p-5 flex flex-col animate-in slide-in-from-right duration-300">
             <div className="flex justify-between items-center border-b pb-4 mb-4">
               <h2 className="text-lg font-bold text-gray-800">Bəyəndiklərim</h2>
@@ -111,7 +139,7 @@ export default function Navbar() {
               ) : (
                 wishlistItems.map((item) => (
                   <div key={item.id} className="flex items-center gap-3 mb-4 p-2 border rounded-lg">
-                    <img src={item.img} alt={item.name} className="w-16 h-16 object-contain bg-gray-50 rounded" />
+                    <img src={item.img?.startsWith('/') ? item.img : `/${item.img}`} alt={item.name} className="w-16 h-16 object-contain bg-gray-50 rounded" />
                     <div className="flex-1">
                       <h4 className="text-sm font-semibold text-gray-700 line-clamp-1">{item.name}</h4>
                       <p className="text-orange-600 text-sm font-bold">{item.price} AZN</p>

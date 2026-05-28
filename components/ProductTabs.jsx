@@ -1,6 +1,7 @@
 "use client";
 import axios from "axios";
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 import { FaRegHeart } from "react-icons/fa";
 
 const categories = ["All", "Sofa", "Table", "Chair", "Bed", "Lightning", "Decore"];
@@ -9,26 +10,15 @@ export default function ProductTabs() {
   const [activeTab, setActiveTab] = useState("All");
   const [products, setProducts] = useState([]);
 
-  
   const handleWishlist = (product) => {
- 
     let wishlist = JSON.parse(localStorage.getItem('wishlist')) || [];
-    
-  
     const index = wishlist.findIndex(item => item.id === product.id);
-    
     if (index > -1) {
-      
       wishlist.splice(index, 1);
     } else {
-     
       wishlist.push(product);
     }
-    
- 
     localStorage.setItem('wishlist', JSON.stringify(wishlist));
-
-    
     window.dispatchEvent(new Event("wishlistUpdate"));
   };
 
@@ -46,7 +36,6 @@ export default function ProductTabs() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 py-6 md:py-10">
-    
       <div className="flex overflow-x-auto md:justify-center items-center space-x-6 md:space-x-12 cursor-pointer border-b border-gray-200 mb-8 md:mb-12 no-scrollbar">
         {categories.map((cat) => (
           <button
@@ -64,25 +53,23 @@ export default function ProductTabs() {
         ))}
       </div>
 
-     
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-10">
         {Array.isArray(products) && products.map((item) => (
           <div key={item.id} className="group cursor-pointer text-center flex flex-col h-full">
-            <div className="bg-[#F8F9FA] rounded-sm p-4 md:p-8 mb-4 md:mb-6 h-[250px] md:h-[350px] flex items-center justify-center overflow-hidden">
+            <Link href={`/product/${item.id}`} className="bg-[#F8F9FA] rounded-sm p-4 md:p-8 mb-4 md:mb-6 h-[250px] md:h-[350px] flex items-center justify-center overflow-hidden">
               <img 
                 src={`${item.img}`} 
                 alt={item.name} 
                 className="max-h-full object-contain group-hover:scale-105 transition-transform duration-500"
               />
-            </div>
+            </Link>
 
-            <h3 className="text-gray-700 text-base md:text-lg font-medium mb-2 px-2">
+            <Link href={`/product/${item.id}`} className="text-gray-700 text-base md:text-lg font-medium mb-2 px-2 hover:text-orange-600 transition-colors">
               {item.name}
-            </h3>
+            </Link>
             
             <div className="mt-auto flex items-center justify-center gap-3 text-[#333] font-bold text-lg md:text-xl">
-              <span>{item.price} AZN</span>
-          
+              <span>{item.price}</span>
               <FaRegHeart 
                 onClick={() => handleWishlist(item)} 
                 className="text-gray-400 hover:text-red-500 transition-colors cursor-pointer" 
